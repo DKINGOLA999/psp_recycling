@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Dashboard — Sigma Recycling</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav class="navbar navbar-expand bg-white shadow-sm">
+  <div class="container">
+    <a class="navbar-brand fw-bold text-primary" href="/">Sigma Recycling</a>
+    <div class="ms-auto">
+      <a href="admin_users.html" class="btn btn-outline-secondary btn-sm me-2">Users</a>
+      <a href="admin_pickups.html" class="btn btn-outline-primary btn-sm me-2">Pickups</a>
+      <a href="admin_payments.html" class="btn btn-outline-success btn-sm me-2">Payments</a>
+      <a href="/api/public/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-5">
+  <h3 class="fw-bold mb-4">Admin Dashboard</h3>
+  <div id="msg" class="mb-2"></div>
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card p-4 shadow-sm text-center">
+        <h5 class="fw-bold">Users</h5>
+        <div id="usersCount" class="h2 fw-bold">--</div>
+        <a href="admin_users.html" class="btn btn-outline-secondary mt-3">Manage Users</a>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card p-4 shadow-sm text-center">
+        <h5 class="fw-bold">Pickups</h5>
+        <div id="pickupsCount" class="h2 fw-bold">--</div>
+        <a href="admin_pickups.html" class="btn btn-primary mt-3">View Pickups</a>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card p-4 shadow-sm text-center">
+        <h5 class="fw-bold">Payments</h5>
+        <div id="paymentsCount" class="h2 fw-bold">--</div>
+        <a href="admin_payments.html" class="btn btn-success mt-3">View Payments</a>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card p-4 shadow-sm text-center">
+        <h5 class="fw-bold">Contacts</h5>
+        <div id="contactsCount" class="h2 fw-bold">--</div>
+        <a href="admin_contacts.html" class="btn btn-outline-primary mt-3">View Messages</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="scripts/api.js"></script>
+<script src="scripts/adminAuth.js"></script>
+<script>
+(async function(){
+  const msgEl = document.getElementById('msg');
+  try{
+    const uRes = await apiFetch('/admin/users');
+    const users = uRes.users || [];
+    document.getElementById('usersCount').innerText = users.length;
+
+    const pRes = await apiFetch('/admin/pickups');
+    const pickups = pRes.pickups || [];
+    document.getElementById('pickupsCount').innerText = pickups.length;
+
+      const payRes = await apiFetch('/payments/all');
+      const payments = payRes.payments || [];
+      document.getElementById('paymentsCount').innerText = payments.length;
+
+      const cRes = await apiFetch('/admin/contacts');
+      const contacts = cRes.contacts || [];
+      document.getElementById('contactsCount').innerText = contacts.length;
+  } catch(err){
+    if (err && (err.error === 'Unauthorized' || err.error === 'Unauthorized: please log in')) {
+      window.location.href = '/login.html';
+      return;
+    }
+    msgEl.className = 'text-danger';
+    msgEl.textContent = err?.error || err?.message || 'Failed to load admin data';
+  }
+})();
+</script>
+<script src="scripts/footer.js"></script>
+</body>
+</html>

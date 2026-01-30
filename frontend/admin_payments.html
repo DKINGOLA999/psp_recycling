@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin - Payments</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<nav class="navbar navbar-expand bg-white shadow-sm">
+  <div class="container">
+    <a class="navbar-brand fw-bold text-primary" href="/">Sigma Recycling</a>
+    <div class="ms-auto">
+      <a href="admin_users.html" class="btn btn-outline-secondary btn-sm me-2">Users</a>
+      <a href="admin_pickups.html" class="btn btn-outline-primary btn-sm me-2">Pickups</a>
+      <a href="admin_payments.html" class="btn btn-outline-success btn-sm me-2">Payments</a>
+      <a href="/api/public/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+    </div>
+  </div>
+</nav>
+
+  <main class="container py-4">
+    <h3 class="fw-bold">Payments (Admin)</h3>
+    <div id="payments">Loading...</div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="scripts/api.js"></script>
+  <script src="scripts/adminAuth.js"></script>
+  <script>
+    (async function(){
+      try{
+        const res = await apiFetch('/payments/all');
+        const payments = res.payments || [];
+        const html = payments.map(p => `
+          <div class="payment">
+            <div class="d-flex justify-content-between">
+              <div>
+                <strong>${p.name}</strong> <div class="muted">${p.email}</div>
+                <div class="mt-1">${p.monthPaidFor}</div>
+              </div>
+              <div class="text-end">
+                <div class="fw-bold">${p.amountPaid}</div>
+                <div class="mt-2">
+                  <button data-id="${p._id}" class="btn btn-sm btn-success approve">Approve</button>
+                  <button data-id="${p._id}" class="btn btn-sm btn-outline-danger reject">Reject</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('\n');
+        document.getElementById('payments').innerHTML = html;
+        document.querySelectorAll('.approve').forEach(b => b.addEventListener('click', async e =>{
+          const id = e.target.dataset.id;
+          await fetch('/api/payments/approve/' + id, { method: 'POST', credentials: 'include' });
+          location.reload();
+        }));
+        document.querySelectorAll('.reject').forEach(b => b.addEventListener('click', async e =>{
+          const id = e.target.dataset.id;
+          await fetch('/api/payments/reject/' + id, { method: 'POST', credentials: 'include' });
+          location.reload();
+        }));
+      } catch(e){ document.getElementById('payments').textContent = 'Error loading payments' }
+    })();
+  </script>
+  <script src="scripts/footer.js"></script>
+</body>
+</html>

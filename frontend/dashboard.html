@@ -1,0 +1,253 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Dashboard — Sigma Recycling</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+
+    <nav class="navbar navbar-expand bg-white shadow-sm">
+      <div class="container">
+        <a class="navbar-brand fw-bold text-primary" href="/">Sigma Recycling</a>
+        <div class="ms-auto d-flex align-items-center">
+          <div class="dropdown me-2">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" id="notifToggle" data-bs-toggle="dropdown" aria-expanded="false">
+              🔔 <span id="notifCount" class="badge bg-danger ms-1" style="display:none">0</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end p-2" id="notifMenu" aria-labelledby="notifToggle" style="min-width:320px; max-width:420px;">
+              <li class="mb-2"><strong>Notifications</strong></li>
+              <li>
+                <div id="notifItems" class="list-group list-group-flush"></div>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li class="px-2"><button id="markAllRead" class="btn btn-sm btn-outline-primary w-100">Mark all read</button></li>
+            </ul>
+          </div>
+
+          <a href="payments.html" class="btn btn-outline-secondary btn-sm me-2">My Payments</a>
+          <!-- Simple link-based logout: server handles session destroy and redirect -->
+          <a href="/api/public/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-5 fade-in">
+      <h3 id="welcomeText" class="fw-bold mb-4">Welcome To Your Dashboard</h3>
+      <div class="row g-4 mb-3">
+        <div class="col-md-6">
+          <div class="card p-3 shadow-sm text-center">
+            <h6 class="muted">Total Paid (Account)</h6>
+            <div id="accountBalance" class="h4 fw-bold">--</div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card p-3 shadow-sm text-center">
+            <h6 class="muted">Outstanding Balance</h6>
+            <div id="outstandingBalance" class="h4 fw-bold text-danger">--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card p-4 shadow-sm text-center">
+            <h5 class="fw-bold">Make Payment</h5>
+            <p class="muted">Make easy and fast payments now</p>
+            <a href="payment.html" class="btn btn-outline-primary w-100 mt-2">Make Payment</a>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card p-4 shadow-sm text-center">
+            <h5 class="fw-bold">Profile</h5>
+            <p class="muted">Edit your account info.</p>
+            <a href="profile.html" class="btn btn-outline-primary w-100">Open Profile</a>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card p-4 shadow-sm text-center">
+            <h5 class="fw-bold">Contact</h5>
+            <p class="muted">Message us for and enquiries</p>
+            <a href="contact.html" class="btn btn-outline-primary w-100">Contact Us Now</a>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card p-4 shadow-sm text-center">
+            <h5 class="fw-bold">Request Pickup</h5>
+            <p class="muted">Make and Schedule pickup date</p>
+            <a href="pickup.html" class="btn btn-outline-primary w-100">Schedule Pickup</a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Pickup modal -->
+    <div class="modal fade" id="pickupModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content rounded-4">
+          <div class="modal-header">
+            <h5 class="modal-title">Schedule Pickup</h5>
+            <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input id="pickupName" class="form-control mb-2" placeholder="Full name" />
+            <input id="pickupDate" type="date" class="form-control mb-2">
+            <select id="wasteType" class="form-select mb-2">
+              <option value="">Waste Type</option>
+              <option>Plastic</option>
+              <option>Paper</option>
+              <option>Metal</option>
+              <option>Organic</option>
+            </select>
+            <input id="pickupNote" class="form-control" placeholder="Additional notes">
+          </div>
+          <div class="modal-footer">
+            <button id="submitPickupBtn" class="btn btn-success w-100">Submit Request</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="scripts/api.js"></script>
+  <script>
+    // Notifications UI in dashboard
+    async function loadNotifications(){
+      try{
+        const res = await apiFetch('/user/notifications');
+        const notes = res.notifications || [];
+        const unreadCount = notes.filter(n => !n.read).length;
+        const badge = document.getElementById('notifCount');
+        if (badge) {
+          if (unreadCount > 0) { badge.style.display = 'inline-block'; badge.innerText = unreadCount; }
+          else badge.style.display = 'none';
+        }
+        const container = document.getElementById('notifItems');
+        if (!container) return;
+        container.innerHTML = '';
+        if (notes.length === 0) {
+          container.innerHTML = '<div class="text-muted small">No notifications</div>';
+          return;
+        }
+        notes.slice(0,20).forEach(n => {
+          const a = document.createElement('a');
+          a.href = '#';
+          a.className = 'list-group-item list-group-item-action py-2';
+          if (!n.read) a.classList.add('fw-bold');
+          a.innerHTML = `
+            <div class="d-flex w-100 justify-content-between">
+              <div class="small text-truncate">${n.message}</div>
+              <small class="text-muted">${new Date(n.createdAt).toLocaleString()}</small>
+            </div>
+          `;
+          a.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try{
+              // mark read
+              await apiFetch('/user/notifications/' + n._id + '/read', { method: 'POST' });
+              // navigate depending on type
+              if (n.type === 'payment' && n.data && n.data.paymentId) {
+                window.location.href = '/payments.html';
+                return;
+              }
+              if (n.type === 'pickup' && n.data && n.data.pickupId) {
+                window.location.href = '/pickup.html';
+                return;
+              }
+              if (n.type === 'contact') {
+                window.location.href = '/contact.html';
+                return;
+              }
+              // default: refresh to clear bold
+              loadNotifications();
+            }catch(err){ console.error(err); }
+          });
+          container.appendChild(a);
+        });
+      }catch(e){ console.error('failed to load notifications', e); }
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      loadNotifications();
+      const markAll = document.getElementById('markAllRead');
+      if (markAll) markAll.addEventListener('click', async ()=>{
+        try{ await apiFetch('/user/notifications/markallread', { method: 'POST' }); loadNotifications(); }catch(e){console.error(e)}
+      });
+      // poll every 30s for updates
+      setInterval(loadNotifications, 30000);
+    });
+  </script>
+  <script>
+      // Load current user and wire actions
+      async function loadUser(){
+        try{
+          const res = await apiFetch('/user/profile');
+          const user = res.user;
+          document.getElementById('welcomeText').innerText = `Welcome, ${user.name}`;
+          // display outstanding from user doc
+          const outstandingEl = document.getElementById('outstandingBalance');
+          if (outstandingEl) outstandingEl.innerText = typeof user.outstanding !== 'undefined' ? `₦${Number(user.outstanding).toLocaleString()}` : '₦0';
+
+          // fetch user payments to compute total paid (account balance)
+          try {
+            const payRes = await apiFetch('/payments/my-payment');
+            const payments = payRes.payments || [];
+            const totalPaid = payments.reduce((s, p) => s + (Number(p.amountPaid) || 0), 0);
+            const accEl = document.getElementById('accountBalance');
+            if (accEl) accEl.innerText = `₦${totalPaid.toLocaleString()}`;
+          } catch (e) {
+            // if payments endpoint unavailable, fall back to 0
+            const accEl = document.getElementById('accountBalance');
+            if (accEl) accEl.innerText = '₦0';
+          }
+
+          // if company user change label
+          if(user.role === 'company' || user.userType === 'company'){
+            document.getElementById('rewardTitle').innerText = 'Reports';
+          }
+        } catch(err){
+          // not authenticated -> redirect to login
+          window.location.href = '/login.html';
+        }
+      }
+
+      loadUser();
+
+      // Logout is handled via a direct link in the navbar: <a href="/api/public/logout">Logout</a>
+
+      // Ensure modal opens even if data attributes fail (some browsers / CSP)
+      const openBtn = document.getElementById('openPickupBtn');
+      if (openBtn) openBtn.addEventListener('click', () => {
+        const modalEl = document.getElementById('pickupModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+      });
+
+      document.getElementById('submitPickupBtn').addEventListener('click', async ()=>{
+        const name = document.getElementById('pickupName').value?.trim();
+        const date = document.getElementById('pickupDate').value;
+        const type = document.getElementById('wasteType').value;
+        const note = document.getElementById('pickupNote').value;
+        if(!name){ alert('Please enter your full name'); return }
+        if(!date || !type){ alert('Please select date and waste type'); return }
+        try{
+          const res = await apiFetch('/pickups', { method: 'POST', body: { name, date, wasteType: type, note } });
+          // hide modal
+          const modalEl = document.getElementById('pickupModal');
+          const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+          modal.hide();
+          // redirect to payment page automatically
+          window.location.href = '/payment.html';
+        } catch(err){ alert(err?.error || 'Failed to submit') }
+      });
+    </script>
+    <script src="scripts/footer.js"></script>
+
+  </body>
+</html>

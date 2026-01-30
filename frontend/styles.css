@@ -1,0 +1,137 @@
+/* New site styling guided by provided images
+	 - image "2.png" is used for the global/site/footer look
+	 - form pages use a lighter card with subtle imagery from provided images
+*/
+
+:root{
+	--black: #000000;
+	--red: #c31b1b;
+	--deep-blue: #071a3a;
+	--blue: #0b66ff;
+	--white: #ffffff;
+	--muted: #9aa3b2;
+}
+
+html, body { height: 100%; margin:0; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+
+/* Page background: use image 2 as large background with dark overlay to match the supplied design */
+body{
+	background-color: var(--deep-blue);
+	background-image: url('../images/2.png');
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: cover;
+	color: var(--white);
+}
+
+/* Semi-opaque overlay to ensure contrast */
+body::after{
+	content: '';
+	position: fixed; inset:0; z-index:0;
+	background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(11,102,255,0.15));
+	pointer-events:none;
+}
+
+.container{ max-width:1140px; padding:28px; position:relative; z-index:1 }
+
+/* Navbar: transparent with white text */
+.navbar{ background: transparent !important; }
+.navbar .navbar-brand{ color: var(--white) !important; font-weight:700 }
+
+/* Card style for forms: white panel with subtle shadow and a small image header (use image 1/3) */
+.form-card{ display:flex; align-items:center; justify-content:center; min-height:78vh }
+.form-card .card{ width:100%; max-width:720px; border-radius:12px; overflow:hidden; box-shadow: 0 12px 40px rgba(2,6,23,0.6); background: linear-gradient(180deg, rgba(2,6,23,0.88), rgba(6,12,32,0.9)); color:var(--white) }
+.form-card .card .hero{ height:160px; background-image: url('../images/1.png'); background-size:cover; background-position:center; position:relative }
+.form-card .card .hero::after{ content:''; position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.35)); }
+.form-card .card .card-body{ padding:28px; color: var(--white) }
+
+/* Form inputs */
+.form-control{ border-radius:8px; border:1px solid rgba(255,255,255,0.08); padding:10px 12px; background: rgba(255,255,255,0.03); color: var(--white) }
+.form-control::placeholder{ color: rgba(255,255,255,0.6) }
+.btn-primary{ background: linear-gradient(90deg,var(--deep-blue),var(--blue)); border: none; color:var(--white); }
+
+/* Footer styled to match image 2: dark strip with decorative graphic */
+.site-footer{ position:relative; overflow:hidden; padding:36px 0; margin-top:48px }
+.site-footer::before{ content:''; position:absolute; inset:0; background-image: url('../images/2.png'); background-size:cover; background-position:center; opacity:0.95; filter: grayscale(0.05) contrast(0.9); }
+.site-footer .container{ position:relative; z-index:2 }
+.site-footer h5, .site-footer p, .site-footer a{ color: var(--white) }
+.site-footer a{ text-decoration:none }
+
+/* Payments list: lighter cards on dark background */
+.payment{ background: rgba(255,255,255,0.06); padding:16px; border-radius:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center }
+.payment .muted{ color: rgba(255,255,255,0.7) }
+
+/* Dashboard cards: transparent panels */
+.card.p-4{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); color: var(--white) }
+
+/* Back button: rounded, contrasting */
+.back-btn{ position: fixed; right:20px; bottom:20px; z-index:999; width:48px; height:48px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:var(--red); color:var(--white); box-shadow: 0 8px 30px rgba(0,0,0,0.45); border: 2px solid rgba(0,0,0,0.15) }
+
+/* Make hero images responsive and taller on desktop */
+.hero-image{ width:100%; height:320px; background-size:cover; background-position:center; border-radius:10px; margin-bottom:20px }
+
+/* Utility */
+.muted{ color: rgba(255,255,255,0.7) }
+@media (max-width:720px){ .container{ padding:12px } .hero-image{ height:180px } }
+
+/* ensure footer links are visible */
+.site-footer .footer-link{ color: rgba(255,255,255,0.9) }
+
+/* --- Animations & Hover transitions --- */
+/* smooth default transitions for interactive elements */
+* { box-sizing: border-box; }
+a, button, .btn, .card, .form-control, .payment, .hero-image, .back-btn {
+	transition: all 240ms cubic-bezier(.2,.9,.2,1);
+}
+
+/* Cards lift and slightly scale on hover */
+.card:hover{ transform: translateY(-10px) scale(1.01); box-shadow: 0 20px 50px rgba(2,6,23,0.7); }
+
+/* Buttons: subtle lift and color deepen */
+.btn:hover{ transform: translateY(-4px) scale(1.02); filter: brightness(1.03); }
+.btn:active{ transform: translateY(-1px) scale(0.98); }
+
+/* Inputs: highlight on focus */
+.form-control:focus{ box-shadow: 0 6px 18px rgba(11,34,68,0.12); border-color: rgba(11,102,255,0.6); }
+
+/* Payments item hover */
+.payment{ transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms; }
+.payment:hover{ transform: translateY(-6px); box-shadow: 0 14px 40px rgba(2,6,23,0.55); }
+
+/* Hero image parallax-like shift on hover */
+.hero-image{ transition: background-position 800ms ease, transform 420ms cubic-bezier(.2,.9,.2,1); }
+.hero-image:hover{ background-position: 40% 60%; transform: scale(1.01); }
+
+/* Back button playful hover */
+.back-btn:hover{ transform: translateY(-6px) rotate(-6deg) scale(1.06); box-shadow: 0 24px 60px rgba(0,0,0,0.55); }
+
+/* Links subtle underline animation */
+.site-footer a, a.footer-link { position: relative; }
+.site-footer a::after, a.footer-link::after{ content: ''; position: absolute; left:0; right:0; bottom:-4px; height:2px; background: rgba(255,255,255,0.18); transform: scaleX(0); transform-origin:left; transition: transform 220ms ease; }
+.site-footer a:hover::after, a.footer-link:hover::after{ transform: scaleX(1); }
+
+/* small pulsing accent for notifications */
+@keyframes pulse {
+	0% { transform: scale(1); opacity: 1 }
+	70% { transform: scale(1.06); opacity: 0.8 }
+	100% { transform: scale(1); opacity: 1 }
+}
+.pulse { animation: pulse 1600ms ease-in-out infinite; }
+
+/* gentle floating animation used on decorative elements */
+@keyframes floaty {
+	0% { transform: translateY(0) }
+	50% { transform: translateY(-6px) }
+	100% { transform: translateY(0) }
+}
+.floaty { animation: floaty 4200ms ease-in-out infinite; }
+
+/* small slide-in used for initial content appearance */
+@keyframes slideInUp { from { opacity:0; transform: translateY(12px) } to { opacity:1; transform:none } }
+.slide-in-up { animation: slideInUp 480ms cubic-bezier(.2,.9,.2,1) both }
+
+/* apply slide-in to main headings */
+h3.fw-bold, h4.fw-bold { will-change: transform, opacity; }
+h3.fw-bold { animation: slideInUp 540ms ease both }
+
+

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PSP Payment</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="navbar bg-white shadow-sm">
+  <div class="container">
+    <a class="fw-bold text-success fs-5">Sigma Recycling</a>
+</nav>
+
+<main class="container form-card fade-in">
+  <div class="hero-image mb-3" style="background-image:url('images/hero-2.jpg')"></div>
+  <div class="card border-0 shadow-sm rounded-4 p-4">
+    <h4 class="fw-bold mb-3 text-center">Recycling Payment</h4>
+
+    <form id="payForm">
+      <input name="name" id="name" class="form-control mb-2" placeholder="Full Name">
+      <input name="email" id="email" class="form-control mb-2" placeholder="Email Address">
+      <input name="account" id="account" class="form-control mb-2" placeholder="Account / Meter Number">
+      <input name="street" id="street" class="form-control mb-2" placeholder="Street Address">
+
+      <select id="monthPaidFor" name="monthPaidFor" class="form-select mb-2">
+        <option value="">Select Month</option>
+        <option>January</option><option>February</option><option>March</option>
+        <option>April</option><option>May</option><option>June</option>
+        <option>July</option><option>August</option><option>September</option>
+        <option>October</option><option>November</option><option>December</option>
+      </select>
+
+      <input name="requiredAmount" id="requiredAmount" type="number" class="form-control mb-2" placeholder="Required Amount">
+      <input name="amountPaid" id="amountPaid" type="number" class="form-control mb-2" placeholder="Amount Paid">
+      <input name="outstandingBefore" id="outstandingBefore" type="number" class="form-control mb-3" placeholder="Outstanding Before">
+
+      <button type="submit" class="btn btn-success w-100">Submit Payment</button>
+    </form>
+    <p id="msg" class="mt-2 muted"></p>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="scripts/api.js"></script>
+<script src="scripts/payment.js"></script>
+<script src="scripts/footer.js"></script>
+</body>
+</html>
+
+  

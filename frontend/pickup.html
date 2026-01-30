@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Request Pickup — Sigma Recycling</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold text-primary" href="/">Sigma Recycling</a>
+      <div class="ms-auto">
+        <a href="dashboard.html" class="btn btn-outline-secondary btn-sm me-2">Dashboard</a>
+        <a href="/api/public/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-5">
+    <section class="form-card">
+      <div class="card">
+        <div class="hero"></div>
+        <div class="card-body">
+          <h3 class="fw-bold">Request a Pickup</h3>
+          <p class="muted">Tell us when you'd like us to collect your recyclables.</p>
+          <div id="msg" class="mb-2"></div>
+
+          <form id="pickupForm">
+            <div class="mb-3">
+              <label class="form-label">Full name</label>
+              <input id="name" class="form-control" placeholder="Your full name">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email (optional)</label>
+              <input id="email" type="email" class="form-control" placeholder="you@example.com">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Pickup date</label>
+              <input id="date" type="date" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Waste type</label>
+              <select id="wasteType" class="form-select">
+                <option value="">Choose...</option>
+                <option>Plastic</option>
+                <option>Paper</option>
+                <option>Metal</option>
+                <option>Organic</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Notes</label>
+              <textarea id="note" class="form-control" rows="4" placeholder="Any extra info (collection location, gate code, etc.)"></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary" type="submit">Request Pickup</button>
+              <a href="dashboard.html" class="btn btn-outline-white">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="scripts/api.js"></script>
+  <script src="scripts/pickup.js"></script>
+  <script src="scripts/footer.js"></script>
+</body>
+</html>

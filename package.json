@@ -1,0 +1,37 @@
+{
+  "name": "semester-2-class-project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "server": "nodemon backend/server.js",
+  "create-admin": "node backend/scripts/createAdmin.js",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "David",
+  "type": "module",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "connect-mongo": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-session": "^1.18.2",
+    "helmet": "^8.1.0",
+    "mongoose": "^9.0.0",
+  "morgan": "^1.10.1",
+  "nodemailer": "^6.9.4",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11",
+    "jest": "^29.0.0",
+    "@babel/preset-env": "^7.21.0",
+    "babel-jest": "^29.0.0"
+  }
+
+}
+  
