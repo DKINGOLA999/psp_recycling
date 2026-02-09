@@ -39,9 +39,47 @@ router.get('/user/:id', async (req, res, next) =>{
 router.delete('/users/:id', async (req, res, next) => {
     try {
         await User.findByIdAndDelete(req.params.id);
-        return res.json({message: "user reward"})
+        return res.json({message: "user removed"})
     } catch (error) {
         next(error)
+    }
+})
+
+// Admin: Change user role
+router.post('/users/:id/role', async (req, res, next) => {
+    try {
+        const { role } = req.body;
+        if (!role) return res.status(400).json({ error: 'Missing role' });
+        
+        const allowedRoles = ['user', 'admin'];
+        if (!allowedRoles.includes(role)) {
+            return res.status(400).json({ error: 'Invalid role. Must be "user" or "admin"' });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.params.id, 
+            { role }, 
+            { new: true }
+        ).select('-password');
+
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        // Create notification for the user
+        try {
+            await Notification.create({
+                userId: user._id,
+                type: 'system',
+                message: `Your account role has been changed to '${role}'.`,
+                data: { role }
+            });
+        } catch (e) {
+            console.log('notification error', e.message);
+        }
+
+        console.log(`User ${user.email} role changed to ${role} by admin`);
+        return res.json({ success: true, user });
+    } catch (error) {
+        next(error);
     }
 })
 

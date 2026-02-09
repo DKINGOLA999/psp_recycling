@@ -5,6 +5,36 @@ import bcrypt from 'bcrypt'
 import User from '../models/User.js'
 import Service from '../models/Services.js'
 import Contact from '../models/Contact.js'
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// create a transporter if SMTP env vars are provided
+let mailTransporter;
+if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  mailTransporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: Number(process.env.EMAIL_PORT) || 587,
+    secure: process.env.EMAIL_SECURE === 'true',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+  console.log('✓ Email transporter configured with:', {
+    host: process.env.EMAIL_HOST,
+    port: Number(process.env.EMAIL_PORT) || 587,
+    user: process.env.EMAIL_USER,
+    secure: process.env.EMAIL_SECURE === 'true'
+  });
+} else {
+  console.warn('⚠ Email transporter NOT configured. Missing environment variables:');
+  if (!process.env.EMAIL_HOST) console.warn('  - EMAIL_HOST');
+  if (!process.env.EMAIL_USER) console.warn('  - EMAIL_USER');
+  if (!process.env.EMAIL_PASS) console.warn('  - EMAIL_PASS');
+  console.warn('  Verification codes will be logged to console instead.');
+}
 
 const router = express.Router();
 const SALT_ROUNDS = 12;
@@ -30,8 +60,12 @@ router.post('/register', async (req, res, next) =>{
                 message: "Email already in use"        
             });
 
+            // Generate 4-digit verification code
+            const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+            const codeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
             const hashed = await bcrypt.hash(password, SALT_ROUNDS);
-            await User.create({
+            const user = await User.create({
                 name,
                 email: email.toLowerCase(),
                 password: hashed,
@@ -39,18 +73,190 @@ router.post('/register', async (req, res, next) =>{
                 street,
                 state,
                 country,
-                userType
+                userType,
+                emailVerificationCode: verificationCode,
+                emailVerificationExpires: codeExpiry,
+                emailVerified: false
             });
+
+            // Send verification email
+            let emailSent = false;
+            try {
+                if (mailTransporter) {
+                    const mailOptions = {
+                        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+                        to: email,
+                        subject: 'Verify your email - Sigma Recycling',
+                        text: `Hello ${name},\n\nThank you for registering with Sigma Recycling!\n\nYour verification code is: ${verificationCode}\n\nThis code expires in 10 minutes.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nSigma Recycling Team`,
+                        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                            <h2 style="color: #0d6efd;">Welcome to Sigma Recycling!</h2>
+                            <p>Hello ${name},</p>
+                            <p>Thank you for registering with us. To complete your registration, please use the verification code below:</p>
+                            <div style="background-color: #f8f9fa; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
+                                <h1 style="color: #0d6efd; font-size: 36px; letter-spacing: 8px; margin: 0;">${verificationCode}</h1>
+                            </div>
+                            <p style="color: #6c757d; font-size: 14px;">This code expires in 10 minutes.</p>
+                            <p>If you didn't request this, please ignore this email.</p>
+                            <hr style="margin: 30px 0; border: none; border-top: 1px solid #dee2e6;">
+                            <p style="color: #6c757d; font-size: 12px;">Best regards,<br>Sigma Recycling Team</p>
+                        </div>`
+                    };
+                    
+                    await mailTransporter.sendMail(mailOptions);
+                    emailSent = true;
+                    console.log('✓ Verification email sent successfully to:', email);
+                } else {
+                    console.log('\n' + '='.repeat(60));
+                    console.log('📧 EMAIL NOT CONFIGURED - DEVELOPMENT MODE');
+                    console.log('='.repeat(60));
+                    console.log(`User: ${name} (${email})`);
+                    console.log(`Verification Code: ${verificationCode}`);
+                    console.log(`Expires: ${codeExpiry.toLocaleString()}`);
+                    console.log('='.repeat(60) + '\n');
+                }
+            } catch (mailErr) {
+                console.error('✗ Failed to send verification email:', mailErr);
+                console.log('\n' + '='.repeat(60));
+                console.log('⚠ EMAIL SEND FAILED - SHOWING CODE FOR DEVELOPMENT');
+                console.log('='.repeat(60));
+                console.log(`User: ${name} (${email})`);
+                console.log(`Verification Code: ${verificationCode}`);
+                console.log(`Error: ${mailErr.message}`);
+                console.log('='.repeat(60) + '\n');
+            }
 
             return res.status(201).json({
                 success: true,
-                message: "Registration successful. Please log in"
+                message: "Verification code sent to your email",
+                userId: user._id
             })
     } catch (error) {
         console.error('Register error:', error && error.message ? error.message : error);
         return res.status(500).json({ success: false, message: error?.message || 'Server error' });
     }
 })
+
+// Verify email with code
+router.post('/verify-email', async (req, res, next) => {
+    try {
+        const { userId, code } = req.body;
+
+        if (!userId || !code) {
+            return res.status(400).json({ success: false, error: 'Missing userId or code' });
+        }
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+
+        // Check if already verified
+        if (user.emailVerified) {
+            return res.status(400).json({ success: false, error: 'Email already verified' });
+        }
+
+        // Check if code expired
+        if (new Date() > user.emailVerificationExpires) {
+            return res.status(400).json({ success: false, error: 'Verification code expired. Please request a new code.' });
+        }
+
+        // Check if code matches
+        if (user.emailVerificationCode !== code) {
+            return res.status(400).json({ success: false, error: 'Invalid verification code' });
+        }
+
+        // Mark as verified and clear verification fields
+        user.emailVerified = true;
+        user.emailVerificationCode = undefined;
+        user.emailVerificationExpires = undefined;
+        await user.save();
+
+        console.log('Email verified for user:', user.email);
+
+        return res.status(200).json({ success: true, message: 'Email verified successfully! You can now log in.' });
+    } catch (error) {
+        console.error('Verify error:', error && error.message ? error.message : error);
+        return res.status(500).json({ success: false, error: 'Server error' });
+    }
+});
+
+// Resend verification code
+router.post('/resend-verification', async (req, res, next) => {
+    try {
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ success: false, error: 'Missing userId' });
+        }
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+
+        if (user.emailVerified) {
+            return res.status(400).json({ success: false, error: 'Email already verified' });
+        }
+
+        // Generate new code
+        const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+        const codeExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+        user.emailVerificationCode = verificationCode;
+        user.emailVerificationExpires = codeExpiry;
+        await user.save();
+
+        // Send email
+        try {
+            if (mailTransporter) {
+                const mailOptions = {
+                    from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+                    to: user.email,
+                    subject: 'New verification code - Sigma Recycling',
+                    text: `Hello ${user.name},\n\nYour new verification code is: ${verificationCode}\n\nThis code expires in 10 minutes.\n\nBest regards,\nSigma Recycling Team`,
+                    html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #0d6efd;">New Verification Code</h2>
+                        <p>Hello ${user.name},</p>
+                        <p>Here is your new verification code:</p>
+                        <div style="background-color: #f8f9fa; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
+                            <h1 style="color: #0d6efd; font-size: 36px; letter-spacing: 8px; margin: 0;">${verificationCode}</h1>
+                        </div>
+                        <p style="color: #6c757d; font-size: 14px;">This code expires in 10 minutes.</p>
+                        <hr style="margin: 30px 0; border: none; border-top: 1px solid #dee2e6;">
+                        <p style="color: #6c757d; font-size: 12px;">Best regards,<br>Sigma Recycling Team</p>
+                    </div>`
+                };
+                
+                await mailTransporter.sendMail(mailOptions);
+                console.log('✓ New verification code sent successfully to:', user.email);
+            } else {
+                console.log('\n' + '='.repeat(60));
+                console.log('📧 RESEND CODE - EMAIL NOT CONFIGURED');
+                console.log('='.repeat(60));
+                console.log(`User: ${user.name} (${user.email})`);
+                console.log(`New Verification Code: ${verificationCode}`);
+                console.log(`Expires: ${codeExpiry.toLocaleString()}`);
+                console.log('='.repeat(60) + '\n');
+            }
+        } catch (mailErr) {
+            console.error('✗ Failed to resend verification email:', mailErr);
+            console.log('\n' + '='.repeat(60));
+            console.log('⚠ RESEND EMAIL FAILED - SHOWING CODE');
+            console.log('='.repeat(60));
+            console.log(`User: ${user.name} (${user.email})`);
+            console.log(`New Verification Code: ${verificationCode}`);
+            console.log(`Error: ${mailErr.message}`);
+            console.log('='.repeat(60) + '\n');
+        }
+
+        return res.status(200).json({ success: true, message: 'New verification code sent to your email' });
+    } catch (error) {
+        console.error('Resend error:', error && error.message ? error.message : error);
+        return res.status(500).json({ success: false, error: 'Server error' });
+    }
+});
 
 //Login
 router.post('/login', async (req, res, next) =>{
@@ -73,6 +279,16 @@ router.post('/login', async (req, res, next) =>{
         success: false,
         error: "Invalid credentials"
        })
+
+       // Check if email is verified
+       if (!user.emailVerified) {
+           return res.status(403).json({
+               success: false,
+               error: "Please verify your email before logging in",
+               needsVerification: true,
+               userId: user._id
+           });
+       }
 
        req.session.userId = user._id;
        req.session.role = user.role;

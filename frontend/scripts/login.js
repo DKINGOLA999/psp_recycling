@@ -13,7 +13,7 @@ document.getElementById('loginForm').addEventListener('submit', async e =>{
     if (role === 'admin') {
       window.location.href = 'admin_dashboard.html';
     } else {
-      window.location.href = 'dashboard.html';
+      window.location.href = 'home.html';
     }
   } catch(err){
     const msgEl = document.getElementById('msg');
