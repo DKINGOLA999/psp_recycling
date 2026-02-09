@@ -133,5 +133,45 @@ a, button, .btn, .card, .form-control, .payment, .hero-image, .back-btn {
 /* apply slide-in to main headings */
 h3.fw-bold, h4.fw-bold { will-change: transform, opacity; }
 h3.fw-bold { animation: slideInUp 540ms ease both }
+/* Make navbar a positioning reference */
 
+.navbar {
+  position: relative;
+  z-index: 1000;
+}
 
+/* Notification dropdown should float above dashboard */
+#notifMenu {
+  position: absolute !important;
+  top: 110%;              /* slightly below the bell */
+  right: 0;
+  z-index: 2000 !important; /* higher than cards and content */
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  border-radius: 12px;
+}
+
+/* Optional: smoother look */
+#notifMenu .list-group-item {
+  border: none;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+#notifMenu .list-group-item:last-child {
+  border-bottom: none;
+}
+
+.navbar .container {
+  overflow: visible;
+}
+
+#notifMenu {
+  transform: translateY(10px);
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.dropdown-menu.show#notifMenu {
+  transform: translateY(0);
+  opacity: 1;
+}
+/* End of new site styling */

@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Home — Sigma Recycling</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+
+    <!-- Navbar (same style as dashboard) -->
+    <nav class="navbar navbar-expand bg-white shadow-sm">
+      <div class="container">
+        <a class="navbar-brand fw-bold text-primary" href="/home.html">Sigma Recycling</a>
+        <div class="ms-auto d-flex align-items-center">
+          <a href="dashboard.html" class="btn btn-outline-primary btn-sm me-2">Dashboard</a>
+          <a href="/api/public/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="container py-5 fade-in text-center">
+      <h1 class="fw-bold mb-3">Welcome to Sigma Recycling</h1>
+      <p class="text-muted mb-4">Making waste management easy, reliable, and rewarding.</p>
+      <a href="dashboard.html" class="btn btn-primary btn-lg px-4">Go to Dashboard</a>
+    </section>
+
+    <!-- Features Section -->
+    <section class="container pb-5">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card h-100 shadow-sm p-4 text-center">
+            <h5 class="fw-bold">Easy Payments</h5>
+            <p class="text-muted">Pay for pickup and recycling services quickly and securely.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 shadow-sm p-4 text-center">
+            <h5 class="fw-bold">Scheduled Pickups</h5>
+            <p class="text-muted">Book waste pickups at your convenience in just a few clicks.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 shadow-sm p-4 text-center">
+            <h5 class="fw-bold">Track Activity</h5>
+            <p class="text-muted">Monitor your payments, pickup history, and reports easily.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call To Action -->
+    <section class="bg-light py-5">
+      <div class="container text-center">
+        <h4 class="fw-bold mb-3">Ready to keep your environment clean?</h4>
+        <a href="pickup.html" class="btn btn-outline-primary btn-lg">Schedule a Pickup</a>
+      </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="scripts/api.js"></script>
+    <script>
+      // Protect page: redirect to login if not authenticated
+      async function checkAuth(){
+        try {
+          await apiFetch('/user/profile');
+        } catch (e) {
+          window.location.href = '/login.html';
+        }
+      }
+      checkAuth();
+    </script>
+    <script src="scripts/footer.js"></script>
+  </body>
+</html>

@@ -58,24 +58,31 @@ const userSchema = new mongoose.Schema({
     outstanding: {
         type: Number,
         default: 0
-    }
+    },
 
-},{
-    timestamps: true,
+    userType: {
+        type: String,
+        enum: ['company', 'household'],
+        required: true
+    },
 
     emailVerified: {
         type: Boolean,
         default: false
-},
-    emailVerificationToken: String,
-    emailVerificationExpires: Date,
+    },
 
-    userType: {
-  type: String,
-  enum: ['company', 'household'],
-  required: true
-}
+    emailVerificationCode: {
+        type: String,
+        required: false
+    },
 
+    emailVerificationExpires: {
+        type: Date,
+        required: false
+    }
+
+}, {
+    timestamps: true
 })
 
 

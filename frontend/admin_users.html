@@ -12,44 +12,143 @@
   <div class="container">
     <a class="navbar-brand fw-bold text-primary" href="/">Sigma Recycling</a>
     <div class="ms-auto">
-      <a href="admin_users.html" class="btn btn-outline-secondary btn-sm me-2">Users</a>
+      <a href="admin_dashboard.html" class="btn btn-outline-secondary btn-sm me-2">Dashboard</a>
+      <a href="admin_users.html" class="btn btn-secondary btn-sm me-2">Users</a>
       <a href="admin_pickups.html" class="btn btn-outline-primary btn-sm me-2">Pickups</a>
       <a href="admin_payments.html" class="btn btn-outline-success btn-sm me-2">Payments</a>
+      <a href="admin_contacts.html" class="btn btn-outline-info btn-sm me-2">Contacts</a>
       <a href="/api/public/logout" class="btn btn-outline-danger btn-sm">Logout</a>
     </div>
   </div>
 </nav>
 
   <main class="container py-4">
-    <h3 class="fw-bold">Users (Admin)</h3>
-    <div id="users">Loading...</div>
+    <h3 class="fw-bold mb-4">Manage Users</h3>
+    <div id="msg" class="alert" style="display: none;"></div>
+    <div id="users" class="mb-4">Loading...</div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="scripts/api.js"></script>
   <script src="scripts/adminAuth.js"></script>
   <script>
-    (async function(){
-      try{
+    let currentAdminId = null;
+
+    // Get current admin's ID
+    (async function() {
+      try {
+        const res = await apiFetch('/user/profile');
+        currentAdminId = res?.user?._id;
+      } catch(e) {
+        console.error('Failed to get current admin profile');
+      }
+    })();
+
+    function showMessage(message, isError = false) {
+      const msgEl = document.getElementById('msg');
+      msgEl.style.display = 'block';
+      msgEl.className = isError ? 'alert alert-danger' : 'alert alert-success';
+      msgEl.textContent = message;
+      setTimeout(() => {
+        msgEl.style.display = 'none';
+      }, 5000);
+    }
+
+    async function changeUserRole(userId, newRole) {
+      try {
+        const res = await apiFetch(`/admin/users/${userId}/role`, {
+          method: 'POST',
+          body: { role: newRole }
+        });
+        showMessage(`User role changed to ${newRole} successfully!`);
+        loadUsers(); // Reload the list
+      } catch(err) {
+        showMessage(err?.error || 'Failed to change user role', true);
+      }
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm('Are you sure you want to delete this user?')) return;
+      try {
+        await apiFetch(`/admin/users/${userId}`, { method: 'DELETE' });
+        showMessage('User deleted successfully!');
+        loadUsers();
+      } catch(err) {
+        showMessage(err?.error || 'Failed to delete user', true);
+      }
+    }
+
+    async function loadUsers() {
+      try {
         const res = await apiFetch('/admin/users');
         const users = res.users || [];
-        const html = users.map(u => `
-          <div class="d-flex align-items-center justify-content-between payment">
-            <div><strong>${u.name}</strong><div class="muted">${u.email}</div></div>
-            <div>
-              <button data-id="${u._id}" class="btn btn-sm btn-outline-danger del">Delete</button>
-            </div>
+        
+        if (users.length === 0) {
+          document.getElementById('users').innerHTML = '<p class="text-muted">No users found.</p>';
+          return;
+        }
+
+        const html = `
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Type</th>
+                  <th>Role</th>
+                  <th>Verified</th>
+                  <th>Outstanding</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${users.map(u => `
+                  <tr>
+                    <td class="fw-bold">${u.name || 'N/A'}</td>
+                    <td>${u.email || 'N/A'}</td>
+                    <td><span class="badge bg-secondary">${u.userType || 'N/A'}</span></td>
+                    <td>
+                      <span class="badge ${u.role === 'admin' ? 'bg-danger' : 'bg-primary'}">
+                        ${u.role || 'user'}
+                      </span>
+                    </td>
+                    <td>
+                      ${u.emailVerified 
+                        ? '<span class="badge bg-success">✓ Verified</span>' 
+                        : '<span class="badge bg-warning text-dark">✗ Unverified</span>'}
+                    </td>
+                    <td>${u.outstanding ? '₦' + u.outstanding.toLocaleString() : '₦0'}</td>
+                    <td>
+                      <div class="btn-group btn-group-sm" role="group">
+                        ${u.role === 'admin' 
+                          ? `<button class="btn btn-outline-secondary" onclick="changeUserRole('${u._id}', 'user')" ${u._id === currentAdminId ? 'disabled title="Cannot demote yourself"' : ''}>
+                              Demote to User
+                            </button>`
+                          : `<button class="btn btn-outline-success" onclick="changeUserRole('${u._id}', 'admin')">
+                              Promote to Admin
+                            </button>`
+                        }
+                        <button class="btn btn-outline-danger" onclick="deleteUser('${u._id}')" ${u._id === currentAdminId ? 'disabled title="Cannot delete yourself"' : ''}>
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
           </div>
-        `).join('\n');
+        `;
         document.getElementById('users').innerHTML = html;
-        document.querySelectorAll('.del').forEach(btn => btn.addEventListener('click', async e =>{
-          const id = e.target.dataset.id;
-          if(!confirm('Delete this user?')) return;
-          await fetch('/api/admin/users/' + id, { method: 'DELETE', credentials: 'include' });
-          location.reload();
-        }));
-      } catch(e){ document.getElementById('users').textContent = 'Error loading users' }
-    })();
+      } catch(e) {
+        document.getElementById('users').innerHTML = '<p class="text-danger">Error loading users. Please try again.</p>';
+        console.error('Error loading users:', e);
+      }
+    }
+
+    // Initial load
+    loadUsers();
   </script>
   <script src="scripts/footer.js"></script>
 </body>
